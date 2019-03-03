@@ -13,7 +13,9 @@ namespace VRCLogViewer
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            Discord.Start();
             Application.Run(new MainForm());
+            Discord.Stop();
         }
     }
 }

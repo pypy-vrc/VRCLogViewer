@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
@@ -10,15 +9,16 @@ namespace VRCLogViewer
 {
     public partial class MainForm : Form
     {
-        private DateTime next_ = DateTime.MinValue;
-        private string created_ = string.Empty;
-        private long position_ = 0;
-        private Dictionary<string, string> info_ = new Dictionary<string, string>();
-        private string last_world_ = string.Empty;
-        private string last_user_ = string.Empty;
+        public static MainForm Instance { get; private set; } = null;
+        private DateTime m_NextUpdateLog = DateTime.MinValue;
+
+        // WINAPI
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
         public MainForm()
         {
+            Instance = this;
             InitializeComponent();
             Utils.SetDoubleBuffering(listview);
         }
@@ -28,174 +28,109 @@ namespace VRCLogViewer
             checkbox.Checked = true;
         }
 
-        private void FetchLog()
-        {
-            listview.BeginUpdate();
-            var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"Low\VRChat\VRChat\output_log.txt";
-            if (File.Exists(path))
-            {
-                try
-                {
-                    using (var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    {
-                        using (var stream = new BufferedStream(file, 64 * 1024))
-                        {
-                            using (var reader = new StreamReader(stream, Encoding.UTF8))
-                            {
-                                var diff = true;
-                                var line = string.Empty;
-                                while ((line = reader.ReadLine()) != null)
-                                {
-                                    if (line.Length > 34 &&
-                                        line[20] == 'L' &&
-                                        line[21] == 'o' &&
-                                        line[22] == 'g')
-                                    {
-                                        if (diff)
-                                        {
-                                            diff = false;
-                                            var s = line.Substring(0, 19);
-                                            if (created_.Equals(s))
-                                            {
-                                                stream.Position = position_;
-                                            }
-                                            else
-                                            {
-                                                created_ = s;
-                                            }
-                                        }
-                                        if (line[34] == '[')
-                                        {
-                                            var log = line.Substring(34);
-                                            if (log.StartsWith("[VRCPlayer] "))
-                                            {
-                                                if (log.StartsWith("[VRCPlayer] Switching "))
-                                                {
-                                                    var s = line.Substring(56);
-                                                    var i = s.IndexOf(" to avatar ");
-                                                    if (i > 0)
-                                                    {
-                                                        s = s.Substring(0, i);
-                                                        if (!string.IsNullOrEmpty(last_user_))
-                                                        {
-                                                            info_["user," + s] = last_user_;
-                                                            last_user_ = string.Empty;
-                                                        }
-                                                    }
-                                                }
-                                                else if (log.StartsWith("[VRCPlayer] Received API user "))
-                                                {
-                                                    last_user_ = line.Substring(64);
-                                                }
-                                            }
-                                            else if (log.StartsWith("[NetworkManager] OnPlayer"))
-                                            {
-                                                if (log.StartsWith("[NetworkManager] OnPlayerJoined "))
-                                                {
-                                                    var s = line.Substring(66);
-                                                    var item = new ListViewItem
-                                                    {
-                                                        Tag = "user," + s,
-                                                        Text = line.Substring(5, 11),
-                                                        StateImageIndex = 1,
-                                                        UseItemStyleForSubItems = false
-                                                    };
-                                                    item.SubItems.Add(new ListViewItem.ListViewSubItem
-                                                    {
-                                                        Text = s + " has joined",
-                                                        ForeColor = Color.RoyalBlue
-                                                    });
-                                                    listview.Items.Add(item);
-                                                    item.EnsureVisible();
-                                                }
-                                                else if (log.StartsWith("[NetworkManager] OnPlayerLeft "))
-                                                {
-                                                    var s = line.Substring(64);
-                                                    var item = new ListViewItem
-                                                    {
-                                                        Tag = "user," + s,
-                                                        Text = line.Substring(5, 11),
-                                                        StateImageIndex = 2,
-                                                        UseItemStyleForSubItems = false
-                                                    };
-                                                    item.SubItems.Add(new ListViewItem.ListViewSubItem
-                                                    {
-                                                        Text = s + " has left",
-                                                        ForeColor = Color.Gray
-                                                    });
-                                                    listview.Items.Add(item);
-                                                    item.EnsureVisible();
-                                                }
-                                            }
-                                            else if (log.StartsWith("[RoomManager] Joining "))
-                                            {
-                                                if (log.StartsWith("[RoomManager] Joining or Creating Room: "))
-                                                {
-                                                    VRCLocationInfo l = null;
-                                                    var s = line.Substring(74);
-                                                    if (!string.IsNullOrEmpty(last_world_))
-                                                    {
-                                                        Utils.ParseLocation(last_world_, out l);
-                                                        info_["world," + s] = last_world_;
-                                                        last_world_ = string.Empty;
-                                                    }
-                                                    var item = new ListViewItem
-                                                    {
-                                                        Tag = "world," + s,
-                                                        Text = line.Substring(5, 11),
-                                                        StateImageIndex = 0,
-                                                        UseItemStyleForSubItems = false,
-                                                        BackColor = Color.Ivory
-                                                    };
-                                                    if (l != null)
-                                                    {
-                                                        s += " " + l.InstanceInfo;
-                                                    }
-                                                    item.SubItems.Add(new ListViewItem.ListViewSubItem
-                                                    {
-                                                        Text = s,
-                                                        ForeColor = Color.DeepPink,
-                                                        BackColor = Color.Ivory
-                                                    });
-                                                    item.SubItems.Add(s);
-                                                    listview.Items.Add(item);
-                                                    item.EnsureVisible();
-                                                }
-                                                else
-                                                {
-                                                    last_world_ = line.Substring(56);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                position_ = stream.Position;
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                }
-            }
-            listview.EndUpdate();
-        }
-
         private void timer_Tick(object sender, EventArgs e)
         {
             if (checkbox.Checked)
             {
-                if (DateTime.Now.CompareTo(next_) >= 0)
+                if (DateTime.Now.CompareTo(m_NextUpdateLog) >= 0)
                 {
                     checkbox.Text = "Updating...";
-                    FetchLog();
-                    next_ = DateTime.Now.AddSeconds(9.5);
+                    VRChatLog.Update();
+                    m_NextUpdateLog = DateTime.Now.AddSeconds(9);
                 }
                 else
                 {
-                    checkbox.Text = "Update in " + ((next_.Ticks - DateTime.Now.Ticks) / 10000000) + " second(s)";
+                    checkbox.Text = "Update in " + ((m_NextUpdateLog.Ticks - DateTime.Now.Ticks) / 10000000) + " second(s)";
                 }
             }
+            if (checkbox_discord_presence.Checked &&
+                FindWindow("UnityWndClass", "VRChat") != IntPtr.Zero)
+            {
+                if (checkbox_show_location.Checked)
+                {
+                    Discord.SetPresence(VRChatLog.WorldName, VRChatLog.AccessTag);
+                }
+                else
+                {
+                    Discord.SetPresence(string.Empty, string.Empty);
+                }
+            }
+            else
+            {
+                Discord.RemovePresence();
+            }
+            Discord.Update();
+        }
+
+        public void SetActivity(ActivityInfo info)
+        {
+            listview.BeginUpdate();
+            while (listview.Items.Count >= 500)
+            {
+                listview.Items.RemoveAt(0);
+            }
+            switch (info.Type)
+            {
+                case ActivityType.EnterWorld:
+                    {
+                        var item = new ListViewItem
+                        {
+                            Tag = "world," + info.Tag,
+                            Text = info.Time,
+                            StateImageIndex = 0,
+                            UseItemStyleForSubItems = false,
+                            BackColor = Color.Ivory
+                        };
+                        item.SubItems.Add(new ListViewItem.ListViewSubItem
+                        {
+                            Text = info.Text,
+                            ForeColor = Color.DeepPink,
+                            BackColor = Color.Ivory
+                        });
+                        listview.Items.Add(item);
+                        item.EnsureVisible();
+                    }
+                    break;
+
+                case ActivityType.PlayerJoined:
+                    {
+                        var item = new ListViewItem
+                        {
+                            Tag = "user," + info.Tag,
+                            Text = info.Time,
+                            StateImageIndex = 1,
+                            UseItemStyleForSubItems = false
+                        };
+                        item.SubItems.Add(new ListViewItem.ListViewSubItem
+                        {
+                            Text = info.Text,
+                            ForeColor = Color.RoyalBlue
+                        });
+                        listview.Items.Add(item);
+                        item.EnsureVisible();
+                    }
+                    break;
+
+                case ActivityType.PlayerLeft:
+                    {
+                        var item = new ListViewItem
+                        {
+                            Tag = "user," + info.Tag,
+                            Text = info.Time,
+                            StateImageIndex = 2,
+                            UseItemStyleForSubItems = false
+                        };
+                        item.SubItems.Add(new ListViewItem.ListViewSubItem
+                        {
+                            Text = info.Text,
+                            ForeColor = Color.Gray
+                        });
+                        listview.Items.Add(item);
+                        item.EnsureVisible();
+                    }
+                    break;
+            }
+            listview.EndUpdate();
         }
 
         private void listview_DoubleClick(object sender, EventArgs e)
@@ -209,24 +144,18 @@ namespace VRCLogViewer
                     switch (a[0])
                     {
                         case "user":
-                            if (info_.TryGetValue(tag, out string id))
-                            {
-                                Process.Start("https://vrchat.net/home/user/" + id);
-                            }
+                            Process.Start("https://vrchat.net/home/user/" + a[1]);
                             return;
 
                         case "world":
-                            if (info_.TryGetValue(tag, out string location))
+                            a = a[1].Split(new[] { ':' }, 2);
+                            if (a.Length == 2)
                             {
-                                var arg = location.Split(new[] { ':' }, 2);
-                                if (arg.Length == 2)
-                                {
-                                    Process.Start("https://vrchat.net/home/launch?worldId=" + arg[0] + "&instanceId=" + arg[1]);
-                                }
-                                else
-                                {
-                                    Process.Start("https://vrchat.net/home/launch?worldId=" + arg[0]);
-                                }
+                                Process.Start("https://vrchat.net/home/launch?worldId=" + a[0] + "&instanceId=" + a[1]);
+                            }
+                            else
+                            {
+                                Process.Start("https://vrchat.net/home/launch?worldId=" + a[0]);
                             }
                             return;
                     }

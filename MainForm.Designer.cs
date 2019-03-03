@@ -38,12 +38,14 @@
             this.checkbox = new System.Windows.Forms.CheckBox();
             this.label_author = new System.Windows.Forms.Label();
             this.textbox = new System.Windows.Forms.TextBox();
+            this.checkbox_show_location = new System.Windows.Forms.CheckBox();
+            this.checkbox_discord_presence = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // timer
             // 
             this.timer.Enabled = true;
-            this.timer.Interval = 500;
+            this.timer.Interval = 1000;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // listview
@@ -57,7 +59,7 @@
             this.listview.Location = new System.Drawing.Point(9, 40);
             this.listview.Margin = new System.Windows.Forms.Padding(0, 10, 0, 0);
             this.listview.Name = "listview";
-            this.listview.Size = new System.Drawing.Size(366, 512);
+            this.listview.Size = new System.Drawing.Size(366, 485);
             this.listview.StateImageList = this.imagelist;
             this.listview.TabIndex = 0;
             this.listview.UseCompatibleStateImageBehavior = false;
@@ -68,12 +70,12 @@
             // columnHeader1
             // 
             this.columnHeader1.Text = "Time";
-            this.columnHeader1.Width = 100;
+            this.columnHeader1.Width = 80;
             // 
             // columnHeader2
             // 
             this.columnHeader2.Text = "Log Text";
-            this.columnHeader2.Width = 230;
+            this.columnHeader2.Width = 250;
             // 
             // imagelist
             // 
@@ -104,7 +106,7 @@
             this.label_author.Name = "label_author";
             this.label_author.Size = new System.Drawing.Size(220, 24);
             this.label_author.TabIndex = 3;
-            this.label_author.Text = "DCinside VRChat Minor Gallery\r\nby mina#5656";
+            this.label_author.Text = "DCinside VRChat Minor Gallery\r\nby pypy (mina#5656)";
             this.label_author.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.label_author.DoubleClick += new System.EventHandler(this.label_author_DoubleClick);
             // 
@@ -118,11 +120,37 @@
             this.textbox.Visible = false;
             this.textbox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textbox_KeyDown);
             // 
+            // checkbox_show_location
+            // 
+            this.checkbox_show_location.AutoSize = true;
+            this.checkbox_show_location.Checked = true;
+            this.checkbox_show_location.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkbox_show_location.Location = new System.Drawing.Point(140, 533);
+            this.checkbox_show_location.Name = "checkbox_show_location";
+            this.checkbox_show_location.Size = new System.Drawing.Size(108, 16);
+            this.checkbox_show_location.TabIndex = 20;
+            this.checkbox_show_location.Text = "Show Location";
+            this.checkbox_show_location.UseVisualStyleBackColor = true;
+            // 
+            // checkbox_discord_presence
+            // 
+            this.checkbox_discord_presence.AutoSize = true;
+            this.checkbox_discord_presence.Checked = true;
+            this.checkbox_discord_presence.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkbox_discord_presence.Location = new System.Drawing.Point(9, 533);
+            this.checkbox_discord_presence.Name = "checkbox_discord_presence";
+            this.checkbox_discord_presence.Size = new System.Drawing.Size(125, 16);
+            this.checkbox_discord_presence.TabIndex = 19;
+            this.checkbox_discord_presence.Text = "Discord Presence";
+            this.checkbox_discord_presence.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(384, 561);
+            this.Controls.Add(this.checkbox_show_location);
+            this.Controls.Add(this.checkbox_discord_presence);
             this.Controls.Add(this.textbox);
             this.Controls.Add(this.checkbox);
             this.Controls.Add(this.label_author);
@@ -132,7 +160,7 @@
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "VRCLogViewer v0.02";
+            this.Text = "VRCLogViewer v0.03";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
             this.ResumeLayout(false);
@@ -149,6 +177,8 @@
         private System.Windows.Forms.CheckBox checkbox;
         private System.Windows.Forms.Label label_author;
         private System.Windows.Forms.TextBox textbox;
+        private System.Windows.Forms.CheckBox checkbox_show_location;
+        private System.Windows.Forms.CheckBox checkbox_discord_presence;
     }
 }
 
