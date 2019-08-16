@@ -1,3 +1,7 @@
+# DEPRECATED
+
+This repository is moved to [pypy-vrc/VRCX](https://github.com/pypy-vrc/VRCX).
+
 VRCLogViewer
 =
 ![1](https://user-images.githubusercontent.com/25771678/53702815-71da1680-3e4e-11e9-83d8-87202fdf6540.png)
